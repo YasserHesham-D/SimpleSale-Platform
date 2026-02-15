@@ -1,6 +1,7 @@
 
 # Tutorial: SimpleSale-Platform
 
+"MVC"
 The SimpleSale Platform is an e-commerce solution designed for selling **wood products** online. It allows customers to browse items organized by *Category Structure* and place new purchases through the integrated **Order Processing** system. Administrators can securely log in using the **JWT Authentication Service** to manage inventory, set featured items, and track orders via the administrative dashboard, all facilitated by the underlying **Application Database Context**.
 
 
