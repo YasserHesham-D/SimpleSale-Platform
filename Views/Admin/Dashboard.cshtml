@@ -1,0 +1,93 @@
+@model IEnumerable<Order>
+
+@{
+    ViewData["Title"] = "Admin Dashboard";
+}
+
+<div class="admin-page">
+    <div class="container">
+        <h1 class="admin-title">Orders Dashboard</h1>
+        
+        <div class="admin-stats">
+            <div class="stat-card">
+                <h3>Total Orders</h3>
+                <p class="stat-number">@Model.Count()</p>
+            </div>
+            <div class="stat-card">
+                <h3>Total Revenue</h3>
+                <p class="stat-number">$@Model.Sum(o => o.TotalPrice).ToString("N2")</p>
+            </div>
+            <div class="stat-card">
+                <h3>Today's Orders</h3>
+                <p class="stat-number">@Model.Count(o => o.OrderDate.Date == DateTime.Today)</p>
+            </div>
+        </div>
+        
+        @if (!Model.Any())
+        {
+            <div class="admin-card">
+                <div class="empty-state">
+                    <h3>No Orders Yet</h3>
+                    <p>Orders will appear here once customers start placing them.</p>
+                </div>
+            </div>
+        }
+        else
+        {
+            <div class="table-container">
+                <h2>All Orders</h2>
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th>Order ID</th>
+                            <th>Customer</th>
+                            <th>Contact</th>
+                            <th>Product</th>
+                            <th>Quantity</th>
+                            <th>Total</th>
+                            <th>Date</th>
+                            <th>Address</th>
+                            <th>Done?</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var order in Model)
+                        {
+                            <tr>
+                                <td><strong>#@order.Id</strong></td>
+                                <td>@order.CustomerName</td>
+                                <td>
+                                    <div class="text-small">@order.CustomerEmail</div>
+                                    <div class="text-small">@order.CustomerPhone</div>
+                                </td>
+                                <td>@order.Product.Name</td>
+                                <td>@order.Quantity</td>
+                                <td><strong>$@order.TotalPrice.ToString("N2")</strong></td>
+                                <td>@order.OrderDate.ToString("MMM dd, yyyy HH:mm")</td>
+                                <td class="text-small">@order.ShippingAddress</td>
+
+                                <td class="action-buttons">
+                                    <form method="post" action="/Admin/ToggleDone" style="display:inline;">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="id" value="@order.Id" />
+                                        <button type="submit" class="btn-featured">
+                                            @if (order.Done)
+                                            {
+                                                <text>✅ Done</text>
+                                            }
+                                            else
+                                            {
+                                                <text>❌ Not Done</text>
+                                            }
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+</div>

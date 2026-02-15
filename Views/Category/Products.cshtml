@@ -1,0 +1,56 @@
+@model Category
+
+@{
+    ViewData["Title"] = Model.Name;
+}
+
+<div class="category-header">
+    <div class="container">
+        <div class="breadcrumb">
+            <a href="/">Home</a> / @Model.Name
+        </div>
+        <h1 class="page-title">@Model.Name</h1>
+        <p class="page-subtitle">@Model.Description</p>
+    </div>
+</div>
+
+<div class="products-section">
+    <div class="container">
+        @if (!Model.Products.Any())
+        {
+            <div class="empty-state">
+                <p>No products available in this category yet.</p>
+                <a href="/" class="btn-primary">Browse Other Categories</a>
+            </div>
+        }
+        else
+        {
+            <div class="products-grid">
+                @foreach (var product in Model.Products)
+                {
+                    <a href="/Product/Details/@product.Id" class="product-card">
+                        <div class="product-image">
+                            <img src="@product.MainImage" alt="@product.Name" onerror="this.src='https://via.placeholder.com/400x300?text=@product.Name'" />
+                            @if (product.Stock == 0)
+                            {
+                                <span class="stock-badge out-of-stock">Out of Stock</span>
+                            }
+                            else if (product.Stock < 5)
+                            {
+                                <span class="stock-badge low-stock">Low Stock</span>
+                            }
+                        </div>
+                        <div class="product-info">
+                            <h3>@product.Name</h3>
+                            <p>@(product.Description.Length > 100 ? product.Description.Substring(0, 100) + "..." : product.Description)</p>
+                            <div class="product-footer">
+                                <span class="price">$@product.Price.ToString("N2")</span>
+                                <span class="view-btn">View Details →</span>
+                            </div>
+                        </div>
+                    </a>
+                }
+            </div>
+        }
+    </div>
+</div>

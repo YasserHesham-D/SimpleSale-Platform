@@ -1,0 +1,160 @@
+@model IEnumerable<Category>
+
+@{
+    ViewData["Title"] = "Home";
+    var featuredProducts = ViewBag.FeaturedProducts as List<Product>;
+}
+
+<div class="hero">
+    <div class="container">
+        <div class="hero-content">
+            <h1 class="hero-title">Premium Wood Products</h1>
+            <p class="hero-subtitle">Discover our curated collection of quality wood materials</p>
+        </div>
+    </div>
+</div>
+
+@if (featuredProducts != null && featuredProducts.Any())
+{
+    <div class="featured-section">
+        <div class="container">
+            <h2 class="section-title">Featured Products</h2>
+            
+            <div class="carousel-container">
+                <button class="carousel-btn carousel-prev" onclick="moveCarousel(-1)">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="15 18 9 12 15 6"></polyline>
+                    </svg>
+                </button>
+                
+                <div class="carousel-wrapper">
+                    <div class="carousel-track" id="carouselTrack">
+                        @foreach (var product in featuredProducts)
+                        {
+                            <a href="/Product/Details/@product.Id" class="carousel-card">
+                                <div class="carousel-image">
+                                    <img src="@(product.MainImage ?? "https://via.placeholder.com/400x300?text=" + (product.Name ?? "Product"))" alt="@(product.Name ?? "")" onerror="this.src='https://via.placeholder.com/400x300?text=@(product.Name ?? "Product")'" />
+                                    <div class="featured-badge">★ Featured</div>
+                                </div>
+                                <div class="carousel-info">
+                                    <span class="carousel-category">@product.Category.Name</span>
+                                    <h3>@(product.Name ?? "")</h3>
+                                    <p>@((product.Description != null && product.Description.Length > 80) ? product.Description.Substring(0, 80) + "..." : (product.Description ?? ""))</p>
+                                    <div class="carousel-footer">
+                                        <span class="price">$@product.Price.ToString("N2")</span>
+                                        <span class="view-btn">View Details →</span>
+                                    </div>
+                                </div>
+                            </a>
+                        }
+                    </div>
+                </div>
+                
+                <button class="carousel-btn carousel-next" onclick="moveCarousel(1)">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                        <polyline points="9 18 15 12 9 6"></polyline>
+                    </svg>
+                </button>
+            </div>
+            
+            <div class="carousel-dots" id="carouselDots"></div>
+        </div>
+    </div>
+}
+
+<div class="categories-section">
+    <div class="container">
+        <h2 class="section-title">Shop by Category</h2>
+        
+        @if (!Model.Any())
+        {
+            <div class="empty-state">
+                <p>No categories available. Please contact admin to add categories.</p>
+            </div>
+        }
+        else
+        {
+            <div class="categories-grid">
+                @foreach (var category in Model)
+                {
+                    <a href="/Category/Products/@category.Id" class="category-card">
+                        @if (!string.IsNullOrEmpty(category.ImageUrl))
+                        {
+                            <div class="category-image">
+                                <img src="@(category.ImageUrl ?? string.Empty)" alt="@(category.Name ?? string.Empty)" onerror="this.style.display='none'" />
+                            </div>
+                        }
+                        <div class="category-overlay"></div>
+                        <div class="category-content">
+                            <h3>@(category.Name ?? "")</h3>
+                            <p>@(category.Description ?? "")</p>
+                            <span class="product-count">@category.Products.Count Products</span>
+                        </div>
+                    </a>
+                }
+            </div>
+        }
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        let currentSlide = 0;
+        const totalProducts = @(featuredProducts?.Count ?? 0);
+        const slidesToShow = 4;
+        const maxSlide = Math.max(0, Math.ceil(totalProducts / slidesToShow) - 1);
+        
+        function updateCarousel() {
+            const track = document.getElementById('carouselTrack');
+            if (!track) return;
+            
+            const slideWidth = 100 / slidesToShow;
+            const offset = currentSlide * slideWidth * slidesToShow;
+            track.style.transform = `translateX(-${offset}%)`;
+            
+            updateDots();
+        }
+        
+        function moveCarousel(direction) {
+            currentSlide = currentSlide + direction;
+            
+            if (currentSlide < 0) {
+                currentSlide = maxSlide;
+            } else if (currentSlide > maxSlide) {
+                currentSlide = 0;
+            }
+            
+            updateCarousel();
+        }
+        
+        function goToSlide(index) {
+            currentSlide = index;
+            updateCarousel();
+        }
+        
+        function updateDots() {
+            const dotsContainer = document.getElementById('carouselDots');
+            if (!dotsContainer) return;
+            
+            dotsContainer.innerHTML = '';
+            for (let i = 0; i <= maxSlide; i++) {
+                const dot = document.createElement('button');
+                dot.className = 'carousel-dot' + (i === currentSlide ? ' active' : '');
+                dot.onclick = () => goToSlide(i);
+                dotsContainer.appendChild(dot);
+            }
+        }
+        
+        // Initialize
+        if (totalProducts > 0) {
+            updateDots();
+        }
+        
+        // Auto-slide every 5 seconds
+        if (totalProducts > slidesToShow) {
+            setInterval(() => {
+                moveCarousel(1);
+            }, 5000);
+        }
+    </script>
+}

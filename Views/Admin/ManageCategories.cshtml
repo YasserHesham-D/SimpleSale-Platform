@@ -1,0 +1,129 @@
+@model IEnumerable<Category>
+
+@{
+    ViewData["Title"] = "Manage Categories";
+}
+
+<div class="admin-page">
+    <div class="container">
+        <h1 class="admin-title">Manage Categories</h1>
+        
+        <div class="admin-card">
+            <h2>Add New Category</h2>
+            <form method="post" action="/Admin/AddCategory" class="admin-form" enctype="multipart/form-data">
+                @Html.AntiForgeryToken()
+                
+                <div class="form-group">
+                    <label>Category Name *</label>
+                    <input type="text" name="Name" required class="form-control" placeholder="Hardwood" />
+                </div>
+                
+                <div class="form-group">
+                    <label>Description *</label>
+                    <textarea name="Description" required class="form-control" rows="3" placeholder="Premium hardwood materials for construction and furniture..."></textarea>
+                </div>
+                
+                @Html.AntiForgeryToken()
+                <div class="form-group">
+                    <label>Category Image *</label>
+                    <input type="file" name="categoryImage" accept="image/*" required class="form-control file-input" onchange="previewImage(this, 'categoryPreview')" />
+                    <small class="form-hint">Upload category image (JPG, PNG, WebP)</small>
+                    <div id="categoryPreview" class="image-preview"></div>
+                </div>
+                
+                <button type="submit" class="btn-primary">Add Category</button>
+            </form>
+        </div>
+        
+        <div class="table-container">
+            <h2>All Categories (@Model.Count())</h2>
+            
+            @if (!Model.Any())
+            {
+                <div class="empty-state">
+                    <p>No categories added yet. Add your first category above.</p>
+                </div>
+            }
+            else
+            {
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Image</th>
+                            <th>Name</th>
+                            <th>Description</th>
+                            <th>Products</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var category in Model)
+                        {
+                            <tr>
+                                <td>@category.Id</td>
+                                <td>
+                                    <img src="@category.ImageUrl" alt="@category.Name" class="table-image" onerror="this.src='https://via.placeholder.com/50?text=N/A'" />
+                                </td>
+                                <td><strong>@category.Name</strong></td>
+                                <td>@category.Description</td>
+                                <td>
+                                    <span class="badge bg-info category-count" data-id="@category.Id">
+                                         Loading...
+                                    </span>
+                                </td>
+
+                                <td>
+                                    <form method="post" action="/Admin/DeleteCategory" style="display:inline;">
+                                        @Html.AntiForgeryToken()
+                                        <input type="hidden" name="id" value="@category.Id" />
+                                        <button type="submit" class="btn-danger" onclick="return confirm('Are you sure you want to delete @category.Name? This will also delete all products in this category.')">Delete</button>
+                                    </form>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            }
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener("DOMContentLoaded", () => {
+        document.querySelectorAll(".category-count").forEach(badge => {
+            const categoryId = badge.getAttribute("data-id");
+
+            fetch(`/Admin/GetCategoryCount?id=${categoryId}`)
+                .then(response => response.json())
+                .then(data => {
+                    const productText = data.count === 1 ? "product" : "products";
+                    badge.textContent = ` ${data.count} ${productText}`;
+                })
+                .catch(err => {
+                    badge.textContent = "Error";
+                    console.error(err);
+                });
+        });
+    });
+</script>
+
+@section Scripts {
+    <script>
+        function previewImage(input, previewId) {
+            const preview = document.getElementById(previewId);
+            preview.innerHTML = '';
+            
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const img = document.createElement('img');
+                    img.src = e.target.result;
+                    img.className = 'preview-img';
+                    preview.appendChild(img);
+                }
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+    </script>
+}

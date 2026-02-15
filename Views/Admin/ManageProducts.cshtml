@@ -1,0 +1,196 @@
+@model IEnumerable<Product>
+
+@{
+    ViewData["Title"] = "Manage Products";
+}
+
+<div class="admin-page">
+    <div class="container">
+        <h1 class="admin-title">Manage Products</h1>
+        
+        <div class="admin-card">
+            <h2>Add New Product</h2>
+            <form method="post" action="/Admin/AddProduct" class="admin-form" enctype="multipart/form-data">
+                @Html.AntiForgeryToken()
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Product Name *</label>
+                        <input type="text" name="Name" required class="form-control" placeholder="Oak Wood Planks" />
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Category *</label>
+                        <select name="CategoryId" required class="form-control">
+                            <option value="">Select Category</option>
+                            @foreach (var cat in ViewBag.Categories as List<Category>)
+                            {
+                                <option value="@cat.Id">@cat.Name</option>
+                            }
+                        </select>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label>Description *</label>
+                    <textarea name="Description" required class="form-control" rows="3" placeholder="High-quality oak wood planks perfect for furniture making..."></textarea>
+                </div>
+                
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Price ($) *</label>
+                        <input type="number" name="Price" step="0.01" min="0" required class="form-control" placeholder="99.99" />
+                    </div>
+                    
+                    <div class="form-group">
+                        <label>Stock Quantity *</label>
+                        <input type="number" name="Stock" min="0" required class="form-control" placeholder="100" />
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label>Main Product Image *</label>
+                    <input type="file" name="mainImage" accept="image/*" required class="form-control file-input" onchange="previewImage(this, 'mainPreview')" />
+                    <small class="form-hint">Upload main product image (JPG, PNG, WebP)</small>
+                    <div id="mainPreview" class="image-preview"></div>
+                </div>
+                
+                <div class="form-group">
+                    <label>Additional Images (Optional)</label>
+                    <input type="file" name="additionalImages" accept="image/*" multiple class="form-control file-input" onchange="previewMultipleImages(this, 'additionalPreview')" />
+                    <small class="form-hint">Upload up to 5 additional images</small>
+                    <div id="additionalPreview" class="image-preview-grid"></div>
+                </div>
+                
+                <button type="submit" class="btn-primary">Add Product</button>
+            </form>
+        </div>
+        
+        <div class="table-container">
+            <h2>All Products (@Model.Count())</h2>
+            
+            @if (!Model.Any())
+            {
+                <div class="empty-state">
+                    <p>No products added yet. Add your first product above.</p>
+                </div>
+            }
+            else
+            {
+                <table class="admin-table">
+                    <thead>
+                        <tr>
+                            <th>ID</th>
+                            <th>Image</th>
+                            <th>Name</th>
+                            <th>Category</th>
+                            <th>Price</th>
+                            <th>Stock</th>
+                            <th>Featured</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @foreach (var product in Model)
+                        {
+                            <tr>
+                                <td>@product.Id</td>
+                                <td>
+                                    <img src="@product.MainImage" alt="@product.Name" class="table-image" onerror="this.src='https://via.placeholder.com/50?text=N/A'" />
+                                </td>
+                                <td><strong>@product.Name</strong></td>
+                                <td>@product.Category.Name</td>
+                                <td>$@product.Price.ToString("N2")</td>
+                                <td>
+                                    @if (product.Stock == 0)
+                                    {
+                                        <span class="badge badge-danger">Out of Stock</span>
+                                    }
+                                    else if (product.Stock < 5)
+                                    {
+                                        <span class="badge badge-warning">@product.Stock</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge badge-success">@product.Stock</span>
+                                    }
+                                </td>
+                                <td>
+                                    @if (product.IsFeatured)
+                                    {
+                                        <span class="badge badge-featured">★ Featured</span>
+                                    }
+                                    else
+                                    {
+                                        <span class="badge badge-default">Not Featured</span>
+                                    }
+                                </td>
+                                <td>
+                                    <div class="action-buttons">
+                                        <form method="post" action="/Admin/ToggleFeatured" style="display:inline;">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="id" value="@product.Id" />
+                                            <button type="submit" class="btn-featured">
+                                                @if (product.IsFeatured)
+                                                {
+                                                    <text>Remove Featured</text>
+                                                }
+                                                else
+                                                {
+                                                    <text>Make Featured</text>
+                                                }
+                                            </button>
+                                        </form>
+                                        <form method="post" action="/Admin/DeleteProduct" style="display:inline;">
+                                            @Html.AntiForgeryToken()
+                                            <input type="hidden" name="id" value="@product.Id" />
+                                            <button type="submit" class="btn-danger" onclick="return confirm('Are you sure you want to delete @product.Name?')">Delete</button>
+                                        </form>
+                                    </div>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            }
+        </div>
+    </div>
+</div>
+
+@section Scripts {
+    <script>
+        function previewImage(input, previewId) {
+            const preview = document.getElementById(previewId);
+            preview.innerHTML = '';
+            
+            if (input.files && input.files[0]) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const img = document.createElement('img');
+                    img.src = e.target.result;
+                    img.className = 'preview-img';
+                    preview.appendChild(img);
+                }
+                reader.readAsDataURL(input.files[0]);
+            }
+        }
+        
+        function previewMultipleImages(input, previewId) {
+            const preview = document.getElementById(previewId);
+            preview.innerHTML = '';
+            
+            if (input.files) {
+                Array.from(input.files).slice(0, 5).forEach(file => {
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        const img = document.createElement('img');
+                        img.src = e.target.result;
+                        img.className = 'preview-img-small';
+                        preview.appendChild(img);
+                    }
+                    reader.readAsDataURL(file);
+                });
+            }
+        }
+    </script>
+}
